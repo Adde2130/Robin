@@ -9,6 +9,7 @@
 
 class Surface {
 public:
+    VertexBuffer* vb;
     VertexArray* va;
     IndexBuffer* ib;
     Shader* shader;

@@ -1,11 +1,11 @@
 #include "Surface.h"
 
-Surface::Surface(float x, float y, float z, float width, float height) : model(translate(glm::mat4(1.0f), glm::vec3(x, y, z))){
+Surface::Surface(float x, float y, float z, float width, float height) : model(translate(glm::mat4(1.0f), glm::vec3(x, y, z))) {
     float vertices[] = {
-        0.0f, 0.0f,  0.0f,   0.0f, 0.0f,
-        0.0f, 0.0f,  height, 1.0f, 0.0f,
-        0.0f, width, height, 1.0f, 1.0f,
-        0.0f, width, 0.0f,   0.0f, 1.0f,
+        0.0f,  0.0f, 0.0f,   0.0f, 0.0f,
+        width, 0.0f, 0.0f,   1.0f, 0.0f,
+        width, 0.0f, height, 1.0f, 1.0f,
+        0.0f,  0.0f, height, 0.0f, 1.0f,
     };
 
     unsigned short indices[] = {
@@ -14,7 +14,7 @@ Surface::Surface(float x, float y, float z, float width, float height) : model(t
     };
 
     va = new VertexArray();
-    VertexBuffer vb(vertices, sizeof(vertices));
+    vb = new VertexBuffer(vertices, sizeof(vertices));
     VertexBufferLayout layout;
     layout.push<float>(3);
     layout.push<float>(2);
@@ -28,6 +28,7 @@ Surface::~Surface(){
     delete shader;
     delete ib;
     delete va;
+    delete vb;
 }
 
 void Surface::draw(Camera* cam) {

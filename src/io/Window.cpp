@@ -6,7 +6,7 @@
 #include <iostream>
 
 Window::Window(const char* name, unsigned int width, unsigned int height, bool fullscreen, int hz)
- : is_fullscreen(fullscreen), width(width), height(height), windowed_width(width), windowed_height(height), hz(hz) {
+ : fullscreen(fullscreen), width(width), height(height), windowed_width(width), windowed_height(height), hz(hz) {
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 5);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
@@ -64,7 +64,7 @@ void Window::set_scroll_callback(void (*scroll_callback)(GLFWwindow* window, dou
 }
 
 void Window::toggle_fullscreen() {
-    if (is_fullscreen) {
+    if (fullscreen) {
         glfwSetWindowMonitor(glfw_window, NULL, xpos, ypos, windowed_width, windowed_height, GLFW_DONT_CARE);
         width = windowed_width;
         height = windowed_height;
@@ -77,5 +77,5 @@ void Window::toggle_fullscreen() {
         width = mode->width;
         height = mode->height;
     }
-    is_fullscreen = !is_fullscreen;
+    fullscreen = !fullscreen;
 }

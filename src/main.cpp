@@ -17,6 +17,7 @@
 #include "Window.h"
 #include "Camera.h"
 #include "Surface.h"
+#include <vector>
 
 const Vec4f COLOR_DARK   = { 45.9f / 255, 48.0f  / 255, 61.0f / 255, 1 };
 const Vec4f COLOR_RED    = { 1          , 119.0f / 255, 121.0f / 255, 1 };
@@ -75,17 +76,25 @@ void mouse_callback(GLFWwindow* glfw_window, double xpos, double ypos){
 void keyboard_callback(GLFWwindow *glfw_window, int key, int scancode, int action, int mods) {
     if(key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
         glfwSetWindowShouldClose(glfw_window, true);
-    if(key == GLFW_KEY_F4 && action == GLFW_PRESS)
+    if(key == GLFW_KEY_F4 && action == GLFW_PRESS) {
+        if(window->is_fullscreen())
+            camera->fov = clampf(camera->fov, 1, 45);
+        else
+            camera->fov += 45.0f;
         window->toggle_fullscreen();
+    }
 }
 
 void framebuffer_size_callback(GLFWwindow* glfw_window, int width, int height) {
     glViewport(0, 0, width, height);
 }
 
-void scroll_callback(GLFWwindow* window, double xoffset, double yoffset) {
+void scroll_callback(GLFWwindow* glfw_window, double xoffset, double yoffset) {
     camera->fov -= yoffset * 3;
-    camera->fov = clampf(camera->fov, 1, 45);
+    if(window->is_fullscreen())
+        camera->fov = clampf(camera->fov, 1, 90);
+    else
+        camera->fov = clampf(camera->fov, 1, 45);
 }
 
 int main() {
@@ -157,7 +166,10 @@ int main() {
 
     float angle = 0.0f;
 
-    Surface surface(-1, -1, -1, 1, 1);
+    std::vector<Surface*> surfaces;
+    for(int i = 0; i < 16; i++)
+        for(int j = 0; j < 16; j++)
+            surfaces.push_back(new Surface(i, -1, j, 1, 1));
 
     while (!window->should_close()) {
         glfwPollEvents();
@@ -177,8 +189,18 @@ int main() {
         cube.get_shader().set_uniform("view", view);
         cube.get_shader().set_uniform("projection", projection);
 
-        surface.draw(camera);
         renderer.draw(cube);
+
+        for(int i = 0; i < 256; i++) {
+            surfaces[i]->shader->bind();
+            surfaces[i]->shader->set_uniform("model", surfaces[i]->model);
+            surfaces[i]->shader->set_uniform("view", camera->get_view_matrix());
+            surfaces[i]->shader->set_uniform("projection", camera->get_projection_matrix((float)window->get_width() / (float)window->get_height()));
+            surfaces[i]->shader->set_uniform("u_Color", (i + i / 16) % 2 ? COLOR_YELLOW : COLOR_BLUE);
+            surfaces[i]->va->bind();
+            surfaces[i]->ib->bind();
+            renderer.draw(surfaces[i]->va, surfaces[i]->ib, surfaces[i]->shader);
+        }
 
         angle += 0.01f;
 
