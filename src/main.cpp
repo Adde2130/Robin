@@ -32,18 +32,45 @@ const unsigned int WINDOW_HEIGHT = 600;
 double mouse_x = -1;
 double mouse_y = -1;
 
+bool move_relative = true;
+
 Camera* camera;
 Window* window;
 
 void update(GLFWwindow* window, Camera* camera) {
-    if(glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-        camera->camera_pos += camera->speed * camera->camera_front;
-    if(glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-        camera->camera_pos -= camera->speed * camera->camera_front;
-    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-        camera->camera_pos -= glm::normalize(glm::cross(camera->camera_front, CAMERA_UP)) * camera->speed;
-    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-        camera->camera_pos += glm::normalize(glm::cross(camera->camera_front, CAMERA_UP)) * camera->speed;
+    if(move_relative) {
+        if(glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+            camera->camera_pos += camera->speed * camera->camera_front;
+        if(glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+            camera->camera_pos -= camera->speed * camera->camera_front;
+        if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+            camera->camera_pos -= glm::normalize(glm::cross(camera->camera_front, CAMERA_UP)) * camera->speed;
+        if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+            camera->camera_pos += glm::normalize(glm::cross(camera->camera_front, CAMERA_UP)) * camera->speed;
+    } else {
+        if(glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
+            glm::vec3 temp = camera->camera_front;
+            temp.y = 0;
+            temp = glm::normalize(temp);
+            camera->camera_pos += camera->speed * temp;
+        }
+        if(glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
+            glm::vec3 temp = camera->camera_front;
+            temp.y = 0;
+            temp = glm::normalize(temp);
+            camera->camera_pos -= camera->speed * temp;
+        }
+        if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
+            glm::vec3 temp = camera->camera_front;
+            temp.y = 0;
+            camera->camera_pos -= glm::normalize(glm::cross(temp, CAMERA_UP)) * camera->speed;
+        }
+        if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
+            glm::vec3 temp = camera->camera_front;
+            temp.y = 0;
+            camera->camera_pos += glm::normalize(glm::cross(temp, CAMERA_UP)) * camera->speed;
+        }
+    }
     if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
         camera->camera_pos += CAMERA_UP * camera->speed;
     if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
@@ -83,6 +110,9 @@ void keyboard_callback(GLFWwindow *glfw_window, int key, int scancode, int actio
             camera->fov += 45.0f;
         window->toggle_fullscreen();
     }
+
+    if(key == GLFW_KEY_TAB && action == GLFW_PRESS)
+        move_relative = !move_relative;
 }
 
 void framebuffer_size_callback(GLFWwindow* glfw_window, int width, int height) {
@@ -167,9 +197,9 @@ int main() {
     float angle = 0.0f;
 
     std::vector<Surface*> surfaces;
-    for(int i = 0; i < 16; i++)
-        for(int j = 0; j < 16; j++)
-            surfaces.push_back(new Surface(i, -1, j, 1, 1));
+    for(int i = 0; i < 32; i++)
+        for(int j = 0; j < 32; j++)
+            surfaces.push_back(new Surface(i - 16, -1, j - 16, 1, 1));
 
     while (!window->should_close()) {
         glfwPollEvents();
@@ -191,12 +221,12 @@ int main() {
 
         renderer.draw(cube);
 
-        for(int i = 0; i < 256; i++) {
+        for(int i = 0; i < 1024; i++) {
             surfaces[i]->shader->bind();
             surfaces[i]->shader->set_uniform("model", surfaces[i]->model);
             surfaces[i]->shader->set_uniform("view", camera->get_view_matrix());
             surfaces[i]->shader->set_uniform("projection", camera->get_projection_matrix((float)window->get_width() / (float)window->get_height()));
-            surfaces[i]->shader->set_uniform("u_Color", (i + i / 16) % 2 ? COLOR_YELLOW : COLOR_BLUE);
+            surfaces[i]->shader->set_uniform("u_Color", (i + i / 32) % 2 ? COLOR_YELLOW : COLOR_BLUE);
             surfaces[i]->va->bind();
             surfaces[i]->ib->bind();
             renderer.draw(surfaces[i]->va, surfaces[i]->ib, surfaces[i]->shader);
