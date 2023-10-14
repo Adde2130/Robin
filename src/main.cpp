@@ -28,6 +28,12 @@ const Vec4f COLOR_BLUE   = { 133.0f / 255, 182.0f / 255, 1, 1};
 const unsigned int WINDOW_WIDTH = 800;
 const unsigned int WINDOW_HEIGHT = 600;
 
+double mouse_x = -1;
+double mouse_y = -1;
+
+Camera* camera;
+Window* window;
+
 void update(GLFWwindow* window, Camera* camera) {
     if(glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
         camera->camera_pos += camera->speed * camera->camera_front;
@@ -41,6 +47,45 @@ void update(GLFWwindow* window, Camera* camera) {
         camera->camera_pos += CAMERA_UP * camera->speed;
     if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
         camera->camera_pos -= CAMERA_UP * camera->speed;
+    if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS)
+        camera->fov = clampf(camera->fov - 0.3f, 1, 45);
+    if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS)
+        camera->fov = clampf(camera->fov + 0.3f, 1, 45);
+}
+
+void mouse_callback(GLFWwindow* glfw_window, double xpos, double ypos){
+    const float sens = 0.1f;
+
+    if(mouse_x != -1 && mouse_y != -1) {
+        camera->yaw   += (xpos - mouse_x) * sens;
+        camera->pitch += (mouse_y - ypos) * sens;
+        camera->pitch = clampf(camera->pitch, -89.9f, 89.9f);
+
+        glm::vec3 front;
+        front.x = cos(glm::radians(camera->yaw)) * cos(glm::radians(camera->pitch));
+        front.y = sin(glm::radians(camera->pitch));
+        front.z = sin(glm::radians(camera->yaw)) * cos(glm::radians(camera->pitch));
+        camera->camera_front = glm::normalize(front);
+    }
+
+    mouse_y = ypos;
+    mouse_x = xpos;
+}
+
+void keyboard_callback(GLFWwindow *glfw_window, int key, int scancode, int action, int mods) {
+    if(key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
+        glfwSetWindowShouldClose(glfw_window, true);
+    if(key == GLFW_KEY_F4 && action == GLFW_PRESS)
+        window->toggle_fullscreen();
+}
+
+void framebuffer_size_callback(GLFWwindow* glfw_window, int width, int height) {
+    glViewport(0, 0, width, height);
+}
+
+void scroll_callback(GLFWwindow* window, double xoffset, double yoffset) {
+    camera->fov -= yoffset * 3;
+    camera->fov = clampf(camera->fov, 1, 45);
 }
 
 int main() {
@@ -49,11 +94,14 @@ int main() {
         return -1;
     }
 
-    Camera camera(45.0f);
+    camera = new Camera(45.0f);
+    camera->camera_pos.x -= 2;
 
-    camera.camera_pos.x -= 2;
-
-    GLFWwindow* window = window_init(WINDOW_WIDTH, WINDOW_HEIGHT, &camera, false, 240);
+    window = new Window("Robin", WINDOW_WIDTH, WINDOW_HEIGHT, false, 240);
+    window->set_mouse_callback(mouse_callback);
+    window->set_keyboard_callback(keyboard_callback);
+    window->set_framebuffer_size_callback(framebuffer_size_callback);
+    window->set_scroll_callback(scroll_callback);
 
     glewExperimental = GL_TRUE;
     if (glewInit() != GLEW_OK) {
@@ -111,15 +159,16 @@ int main() {
 
     Surface surface(-1, -1, -1, 1, 1);
 
-    while (!glfwWindowShouldClose(window)) {
+    while (!window->should_close()) {
         glfwPollEvents();
 
-        update(window, &camera);
+        update(window->get_glfw_window(), camera);
 
         renderer.clear();
-        glm::mat4 view = camera.get_view_matrix();
-        glm::mat4 projection = camera.get_projection_matrix((float)WINDOW_WIDTH / (float)WINDOW_HEIGHT);
+        glm::mat4 view = camera->get_view_matrix();
+        glm::mat4 projection = camera->get_projection_matrix((float)window->get_width() / (float)window->get_height());
         glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(size / 2, size / 2, size / 2));
+
         model = glm::rotate(model, angle, glm::vec3(0.0f, 0.0f, 1.0f));
         model = glm::translate(model, glm::vec3(-size / 2, -size / 2, -size / 2));
 
@@ -128,15 +177,17 @@ int main() {
         cube.get_shader().set_uniform("view", view);
         cube.get_shader().set_uniform("projection", projection);
 
-        surface.draw(&camera);
+        surface.draw(camera);
         renderer.draw(cube);
 
         angle += 0.01f;
 
-        glfwSwapBuffers(window);
+        glfwSwapBuffers(window->get_glfw_window());
     }
 
-    glfwDestroyWindow(window);
+    delete window;
+    delete camera;
+
     glfwTerminate();
 
     return 0;

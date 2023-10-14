@@ -5,21 +5,8 @@
 #include "Math.h"
 #include <iostream>
 
-void mouse_callback(GLFWwindow* window, double xpos, double ypos);
-void keyboard_callback(GLFWwindow *window, int key, int scancode, int action, int mods);
-
-Camera* camera;
-
-double mouse_x = -1;
-double mouse_y = -1;
-
-GLFWwindow* window;
-GLFWmonitor* monitor;
-int windowed_width, windowed_height, windowed_xpos, windowed_ypos;
-bool is_fullscreen = false;
-int hz = 60;
-
-GLFWwindow* window_init(unsigned int width, unsigned int height, Camera* p_camera, bool fullscreen, int p_hz) {
+Window::Window(const char* name, unsigned int width, unsigned int height, bool fullscreen, int hz)
+ : is_fullscreen(fullscreen), width(width), height(height), windowed_width(width), windowed_height(height), hz(hz) {
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 5);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
@@ -27,84 +14,68 @@ GLFWwindow* window_init(unsigned int width, unsigned int height, Camera* p_camer
 
     monitor = glfwGetPrimaryMonitor();
     const GLFWvidmode* mode = glfwGetVideoMode(monitor);
-    windowed_width = 
-    hz = p_hz;
-    is_fullscreen = fullscreen;
-
+    xpos = (mode->width - width) / 2;
+    ypos = (mode->height - height) / 2;
     if(fullscreen) {
-        window = glfwCreateWindow(mode->width, mode->height, "Robin", monitor, nullptr);
-        glfwSetWindowMonitor(window, monitor, 0, 0, mode->width, mode->height, hz);
+        glfw_window = glfwCreateWindow(mode->width, mode->height, name, monitor, nullptr);
+        glfwSetWindowMonitor(glfw_window, monitor, 0, 0, mode->width, mode->height, hz);
+        this->width = mode->width;
+        this->height = mode->height;
     } else {
-        window = glfwCreateWindow(width, height, "Robin", nullptr, nullptr);
+        glfw_window = glfwCreateWindow(width, height, name, nullptr, nullptr);
+        glfwSetWindowMonitor(glfw_window, NULL, xpos, ypos, width, height, hz);
     }
 
-    if (!window) {
-        std::cout << "Failed to create GLFW window" << std::endl;
-        glfwTerminate();
-        return NULL;
-    }
-
-    int icon_width, icon_height, nrChannels;
-    unsigned char* data = stbi_load("gfx/Robin.png", &icon_width, &icon_height, &nrChannels, 0);
+    int icon_width, icon_height, nr_channels;
+    unsigned char* data = stbi_load("gfx/Robin.png", &icon_width, &icon_height, &nr_channels, 0);
     if (data) {
         GLFWimage images[1];
         images[0].width = icon_width;
         images[0].height = icon_height;
         images[0].pixels = data;
-        glfwSetWindowIcon(window, 1, images);
+        glfwSetWindowIcon(glfw_window, 1, images);
         stbi_image_free(data);
     }
 
-    glfwMakeContextCurrent(window);
-    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+    glfwMakeContextCurrent(glfw_window);
+    glfwSetInputMode(glfw_window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
     if (glfwRawMouseMotionSupported())
-        glfwSetInputMode(window, GLFW_RAW_MOUSE_MOTION, GLFW_TRUE);
-    glfwSetCursorPosCallback(window, mouse_callback);
-    glfwSetKeyCallback(window, keyboard_callback);
-
-    camera = p_camera;
-
-    return window;
+        glfwSetInputMode(glfw_window, GLFW_RAW_MOUSE_MOTION, GLFW_TRUE);
 }
 
-void toggle_fullscreen() {
+Window::~Window() {
+    glfwDestroyWindow(glfw_window);
+}
+
+void Window::set_mouse_callback(void (*mouse_callback)(GLFWwindow* window, double xpos, double ypos)) {
+    glfwSetCursorPosCallback(glfw_window, mouse_callback);
+}
+
+void Window::set_keyboard_callback(void (*keyboard_callback)(GLFWwindow* window, int key, int scancode, int action, int mods)) {
+    glfwSetKeyCallback(glfw_window, keyboard_callback);
+}
+
+void Window::set_framebuffer_size_callback(void (*framebuffer_size_callback)(GLFWwindow* window, int width, int height)){
+    glfwSetFramebufferSizeCallback(glfw_window, framebuffer_size_callback);
+}
+
+void Window::set_scroll_callback(void (*scroll_callback)(GLFWwindow* window, double xoffset, double yoffset)) {
+    glfwSetScrollCallback(glfw_window, scroll_callback);
+}
+
+void Window::toggle_fullscreen() {
     if (is_fullscreen) {
-        glfwSetWindowMonitor(window, NULL, windowed_xpos, windowed_ypos, windowed_width, windowed_height, GLFW_DONT_CARE);
+        glfwSetWindowMonitor(glfw_window, NULL, xpos, ypos, windowed_width, windowed_height, GLFW_DONT_CARE);
+        width = windowed_width;
+        height = windowed_height;
     } else {
-        glfwGetWindowSize(window, &windowed_width, &windowed_height);
-        glfwGetWindowPos(window, &windowed_xpos, &windowed_ypos);
+        glfwGetWindowSize(glfw_window, &windowed_width, &windowed_height);
+        glfwGetWindowPos(glfw_window, &xpos, &ypos);
         monitor = glfwGetPrimaryMonitor();
         const GLFWvidmode* mode = glfwGetVideoMode(monitor);
-        glfwSetWindowMonitor(window, monitor, 0, 0, mode->width, mode->height, mode->refreshRate);
+        glfwSetWindowMonitor(glfw_window, monitor, 0, 0, mode->width, mode->height, mode->refreshRate);
+        width = mode->width;
+        height = mode->height;
     }
     is_fullscreen = !is_fullscreen;
-}
-
-void mouse_callback(GLFWwindow* window, double xpos, double ypos){
-    const float sens = 0.1f;
-
-    if(mouse_x != -1 && mouse_y != -1) {
-        camera->yaw   += (xpos - mouse_x) * sens;
-        camera->pitch += (mouse_y - ypos) * sens;
-        camera->pitch = clampf(camera->pitch, -89.9f, 89.9f);
-
-        glm::vec3 front;
-        front.x = cos(glm::radians(camera->yaw)) * cos(glm::radians(camera->pitch));
-        front.y = sin(glm::radians(camera->pitch));
-        front.z = sin(glm::radians(camera->yaw)) * cos(glm::radians(camera->pitch));
-        camera->camera_front = glm::normalize(front);
-    }
-
-    mouse_y = ypos;
-    mouse_x = xpos;
-}
-
-void keyboard_callback(GLFWwindow *window, int key, int scancode, int action, int mods) {
-    if(key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) {
-        glfwSetWindowShouldClose(window, true);
-    }
-
-    if(key == GLFW_KEY_F4 && action == GLFW_PRESS) {
-        toggle_fullscreen();
-    }
 }
