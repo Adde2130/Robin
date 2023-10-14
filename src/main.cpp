@@ -32,10 +32,12 @@ const unsigned int WINDOW_HEIGHT = 600;
 double mouse_x = -1;
 double mouse_y = -1;
 
-bool move_relative = true;
+bool move_relative = false;
 
 Camera* camera;
 Window* window;
+
+float velocity;
 
 void update(GLFWwindow* window, Camera* camera) {
     if(move_relative) {
@@ -71,14 +73,19 @@ void update(GLFWwindow* window, Camera* camera) {
             camera->camera_pos += glm::normalize(glm::cross(temp, CAMERA_UP)) * camera->speed;
         }
     }
-    if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
-        camera->camera_pos += CAMERA_UP * camera->speed;
-    if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
-        camera->camera_pos -= CAMERA_UP * camera->speed;
+    if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS && camera->camera_pos.y == 0)
+        velocity = 0.025f;
+    // if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
+    //     camera->camera_pos -= CAMERA_UP * camera->speed;
     if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS)
         camera->fov = clampf(camera->fov - 0.3f, 1, 45);
     if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS)
         camera->fov = clampf(camera->fov + 0.3f, 1, 45);
+
+    camera->camera_pos.y += velocity;
+    camera->camera_pos.y = clampf(camera->camera_pos.y, 0, 999);
+    velocity -= 0.0004;
+    
 }
 
 void mouse_callback(GLFWwindow* glfw_window, double xpos, double ypos){
@@ -148,7 +155,7 @@ int main() {
         return -1;
     }
 
-    enable_opengl_callbacks();
+    //enable_opengl_callbacks();
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glEnable(GL_BLEND);
     glEnable(GL_DEPTH_TEST);

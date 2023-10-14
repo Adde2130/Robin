@@ -10,7 +10,7 @@ SRCDIR = src
 OBJDIR = obj
 BINDIR = bin
 LIBDIR = lib
-INCDIR := include src src/graphics src/util src/vendor src/vendor/stb_image src/vendor/glm src/io
+INCDIR := include src src/graphics src/util src/vendor src/vendor/stb_image src/vendor/glm src/io src/entity
 
 # Libraries for GLFW
 LIB = -lglfw3 -lgdi32 -lopengl32 -lglew32 -lglu32
