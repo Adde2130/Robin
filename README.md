@@ -1,4 +1,4 @@
 # Robin
 3D (and mayne also 2D?) engine using opengl
 
-![example](https://github.com/Adde2130/Robin/assets/71071757/605d3cf7-cb53-403b-8599-e4e56ab9bcd1)
+![example](https://github.com/Adde2130/Robin/assets/71071757/08135a75-a85d-4e30-b0b1-72d109f1e0f6)
