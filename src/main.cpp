@@ -37,6 +37,10 @@ void update(GLFWwindow* window, Camera* camera) {
         camera->camera_pos -= glm::normalize(glm::cross(camera->camera_front, CAMERA_UP)) * camera->speed;
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
         camera->camera_pos += glm::normalize(glm::cross(camera->camera_front, CAMERA_UP)) * camera->speed;
+    if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
+        camera->camera_pos += CAMERA_UP * camera->speed;
+    if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
+        camera->camera_pos -= CAMERA_UP * camera->speed;
 }
 
 int main() {
