@@ -1,0 +1,10 @@
+/*
+/*/
+!.gitignore
+!/include/
+!/src/
+!glew32.dll
+!makefile
+!/shader/
+!/lib/
+!/gfx/
