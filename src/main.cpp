@@ -1,30 +1,30 @@
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 #include <iostream>
+#include <chrono>
 #include "graphics/Shader.h"
 #include "debug/opengl_debug.h"
-#include "graphics/VertexBuffer.h"
-#include "graphics/IndexBuffer.h"
-#include "graphics/VertexArray.h"
-#include "graphics/VertexBufferLayout.h"
 #include "graphics/Renderer.h"
 #include "graphics/Texture.h"
 #include "util/Math.h"
 #include "glm/glm.hpp"
 #include "glm/gtc/matrix_transform.hpp"
 #include "stb_image.h"
-#include "Model.h"
 #include "Window.h"
 #include "Camera.h"
-#include "Surface.h"
+#include "Cube.h"
+#include "Player.h"
 #include <vector>
+#include <synchapi.h>
 
-const Vec4f COLOR_DARK   = { 45.9f / 255, 48.0f  / 255, 61.0f / 255, 1 };
-const Vec4f COLOR_RED    = { 1          , 119.0f / 255, 121.0f / 255, 1 };
-const Vec4f COLOR_YELLOW = { 1, 238.0f / 255, 139.0f / 255, 1};
-const Vec4f COLOR_GREEN  = { 123.0f / 255, 1, 113.0f / 255, 1};
-const Vec4f COLOR_PINK   = { 1, 143.0f / 255, 1, 1 };
-const Vec4f COLOR_BLUE   = { 133.0f / 255, 182.0f / 255, 1, 1};
+const Vec4f COLOR_DARK      = { 45.9f / 255, 48.0f  / 255, 61.0f / 255, 1 };
+const Vec4f COLOR_RED       = { 1          , 119.0f / 255, 121.0f / 255, 1 };
+const Vec4f COLOR_YELLOW    = { 1, 238.0f / 255, 139.0f / 255, 1};
+const Vec4f COLOR_GREEN     = { 123.0f / 255, 1, 113.0f / 255, 1};
+const Vec4f COLOR_OTHER_GREEN = { 50.0f / 255, 168.0f / 255, 82.0f / 255, 1};
+const Vec4f COLOR_PINK      = { 1, 143.0f / 255, 1, 1 };
+const Vec4f COLOR_BLUE      = { 133.0f / 255, 182.0f / 255, 1, 1};
+const Vec4f COLOR_BLUE_DARK = { 77.0f / 255, 134.0f / 255, 219.0f / 220, 1};
 
 const unsigned int WINDOW_WIDTH = 800;
 const unsigned int WINDOW_HEIGHT = 600;
@@ -36,6 +36,7 @@ bool move_relative = false;
 
 Camera* camera;
 Window* window;
+Renderer* renderer;
 
 float velocity;
 
@@ -81,7 +82,7 @@ void update(GLFWwindow* window, Camera* camera) {
         camera->fov = clampf(camera->fov - 0.3f, 1, 45);
     if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS)
         camera->fov = clampf(camera->fov + 0.3f, 1, 45);
-
+        
     camera->camera_pos.y += velocity;
     camera->camera_pos.y = clampf(camera->camera_pos.y, 0, 999);
     velocity -= 0.0004;
@@ -116,6 +117,7 @@ void keyboard_callback(GLFWwindow *glfw_window, int key, int scancode, int actio
         else
             camera->fov += 45.0f;
         window->toggle_fullscreen();
+        renderer->set_window_dimensions(window->get_width(), window->get_height());
     }
 
     if(key == GLFW_KEY_TAB && action == GLFW_PRESS)
@@ -140,6 +142,8 @@ int main() {
         return -1;
     }
 
+
+
     camera = new Camera(45.0f);
     camera->camera_pos.x -= 2;
 
@@ -149,103 +153,70 @@ int main() {
     window->set_framebuffer_size_callback(framebuffer_size_callback);
     window->set_scroll_callback(scroll_callback);
 
+    // No V-SYNC
+    // glfwSwapInterval(1);
+
     glewExperimental = GL_TRUE;
     if (glewInit() != GLEW_OK) {
         std::cout << "Failed to initialize GLEW" << std::endl;
         return -1;
     }
 
-    //enable_opengl_callbacks();
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    enable_opengl_callbacks();
     glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glBlendEquation(GL_FUNC_ADD);
     glEnable(GL_DEPTH_TEST);
 
-    float size = 0.5f;
 
-    float vertices[] = {
-        0.0f, 0.0f, 0.0f, 0.0f, 0.0f,
-        size, 0.0f, 0.0f, 1.0f, 0.0f,
-        size, size, 0.0f, 1.0f, 1.0f,
-        0.0f, size, 0.0f, 0.0f, 1.0f,
-        0.0f, 0.0f, size, 0.0f, 0.0f,
-        size, 0.0f, size, 1.0f, 0.0f,
-        size, size, size, 1.0f, 1.0f,
-        0.0f, size, size, 0.0f, 1.0f
-    };
+    renderer = new Renderer(window->get_width(), window->get_height());
+    renderer->set_clear_color(COLOR_DARK);
 
-    unsigned short indices[] = {
-        0, 1, 2, 2, 3, 0,
-        4, 5, 6, 6, 7, 4,
-        0, 1, 5, 5, 4, 0,
-        2, 3, 7, 7, 6, 2,
-        0, 3, 7, 7, 4, 0,
-        1, 2, 6, 6, 5, 1 
-    };
+    Vec4f cube1_color= {COLOR_RED.x, COLOR_RED.y, COLOR_RED.z, 0.6f};
+    Cube cube(TransformComponent(0.0f, 0.0f, 5.0f, 2.5f, 0.5f, 0.5f), cube1_color);
+    cube.render(*renderer);
 
-    VertexArray va;
-    VertexBuffer vb(vertices, sizeof(vertices));
-    VertexBufferLayout layout;
-    layout.push<float>(3);
-    layout.push<float>(2);
-    va.add_buffer(vb, layout);
+    Vec4f cube2_color= {COLOR_GREEN.x, COLOR_GREEN.y, COLOR_GREEN.z, 0.6f};
+    Cube cube2(TransformComponent(3.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f), cube2_color);
+    cube2.render(*renderer);
 
-    IndexBuffer ib(indices, sizeof(indices) / sizeof(unsigned short));
+    for(int i = 0; i < 24; i++) {
+        for(int j = 0; j < 24; j++) {
+            Cube temp_cube(TransformComponent(i - 8, -2, j - 8, 1, 1, 1), ((j + i) % 2) ? COLOR_YELLOW : COLOR_BLUE);
+            temp_cube.render(*renderer);
+        }
+    }
+    
+    Player player(1.0f, 1.0f, 1.0f);
+    player.add_render_component(*renderer);
 
-    Shader shader("shader/solid_color.vs", "shader/solid_color.fs");
-
-    Model cube(va, ib, shader);
-
-    cube.get_shader().bind();
-    cube.get_shader().set_uniform("u_Color", COLOR_RED);
-
-    Renderer renderer;
-    renderer.set_clear_color(COLOR_DARK);
-
-    float angle = 0.0f;
-
-    std::vector<Surface*> surfaces;
-    for(int i = 0; i < 32; i++)
-        for(int j = 0; j < 32; j++)
-            surfaces.push_back(new Surface(i - 16, -1, j - 16, 1, 1));
+    constexpr std::chrono::milliseconds one_second(1000);
+    auto start_time = std::chrono::steady_clock::now();
+    unsigned int frames = 0;
 
     while (!window->should_close()) {
+        frames++;
+
         glfwPollEvents();
 
         update(window->get_glfw_window(), camera);
 
-        renderer.clear();
-        glm::mat4 view = camera->get_view_matrix();
-        glm::mat4 projection = camera->get_projection_matrix((float)window->get_width() / (float)window->get_height());
-        glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(size / 2, size / 2, size / 2));
-
-        model = glm::rotate(model, angle, glm::vec3(0.0f, 0.0f, 1.0f));
-        model = glm::translate(model, glm::vec3(-size / 2, -size / 2, -size / 2));
-
-        cube.get_shader().bind();
-        cube.get_shader().set_uniform("model", model);
-        cube.get_shader().set_uniform("view", view);
-        cube.get_shader().set_uniform("projection", projection);
-
-        renderer.draw(cube);
-
-        for(int i = 0; i < 1024; i++) {
-            surfaces[i]->shader->bind();
-            surfaces[i]->shader->set_uniform("model", surfaces[i]->model);
-            surfaces[i]->shader->set_uniform("view", camera->get_view_matrix());
-            surfaces[i]->shader->set_uniform("projection", camera->get_projection_matrix((float)window->get_width() / (float)window->get_height()));
-            surfaces[i]->shader->set_uniform("u_Color", (i + i / 32) % 2 ? COLOR_YELLOW : COLOR_BLUE);
-            surfaces[i]->va->bind();
-            surfaces[i]->ib->bind();
-            renderer.draw(surfaces[i]->va, surfaces[i]->ib, surfaces[i]->shader);
-        }
-
-        angle += 0.01f;
+        renderer->draw(camera);
 
         glfwSwapBuffers(window->get_glfw_window());
+
+        auto current_time = std::chrono::steady_clock::now();
+        auto elapsed_time = std::chrono::duration_cast<std::chrono::milliseconds>(current_time - start_time);
+        if (elapsed_time >= one_second) {
+            std::cout << "Frames per second: " << frames << std::endl;
+            frames = 0; 
+            start_time = std::chrono::steady_clock::now();
+        }
     }
 
     delete window;
     delete camera;
+    delete renderer;
 
     glfwTerminate();
 

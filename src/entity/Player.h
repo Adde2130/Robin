@@ -1,11 +1,16 @@
 #pragma once
 
-#include "Entity.h"
+#include <memory>
+#include "TransformComponent.h"
+#include "RenderComponent.h"
+#include "Renderer.h"
 
 class Player {
 public:
     Player(float x, float y, float z);
+    void add_render_component(Renderer& renderer);
 private:
-    Entity entity;
+    float x, y, z;
     float speed;
+    std::unique_ptr<RenderComponent> HUD;
 };

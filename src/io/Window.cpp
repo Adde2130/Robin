@@ -41,6 +41,7 @@ Window::Window(const char* name, unsigned int width, unsigned int height, bool f
     glfwSetInputMode(glfw_window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
     if (glfwRawMouseMotionSupported())
         glfwSetInputMode(glfw_window, GLFW_RAW_MOUSE_MOTION, GLFW_TRUE);
+
 }
 
 Window::~Window() {

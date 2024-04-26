@@ -1,6 +1,9 @@
 #pragma once
 
 #include "graphics/Renderer.h"
+#include <string.h>
+
+GLuint LoadTexture(const std::string& filename);
 
 class Texture {
 private:

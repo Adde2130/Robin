@@ -3,6 +3,27 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 
+GLuint LoadTexture(const std::string& filename){
+    int w, h, bits;
+
+    std::string path = "res/" + filename;
+
+    stbi_set_flip_vertically_on_load(1);
+    auto* pixels = stbi_load(path.c_str(), &w, &h, &bits, STBI_rgb_alpha);
+    GLuint textureID;
+    glCreateTextures(GL_TEXTURE_2D, 1, &textureID);
+    glBindTexture(GL_TEXTURE_2D, textureID);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
+
+    stbi_image_free(pixels);
+
+    return textureID;
+}
+
 Texture::Texture(const char* path) : renderer_id(0), filepath(path), pixel_buffer(nullptr), width(0), height(0), bpp(0){
     stbi_set_flip_vertically_on_load(1);
     pixel_buffer = stbi_load(path, &width, &height, &bpp, 4);

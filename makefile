@@ -1,6 +1,6 @@
 # Compiler and compiler flags
 CC = C:/mingw64/bin/g++
-CFLAGS = -Wall -g
+CFLAGS = -Wall -g -std=c++17
 
 # Linker flags for static linking
 LDFLAGS = -static-libgcc
@@ -10,7 +10,7 @@ SRCDIR = src
 OBJDIR = obj
 BINDIR = bin
 LIBDIR = lib
-INCDIR := include src src/graphics src/util src/vendor src/vendor/stb_image src/vendor/glm src/io src/entity
+INCDIR := include src src/graphics src/util src/vendor src/vendor/stb_image src/vendor/glm src/io src/entity src/graphics/geometry src/component
 
 # Libraries for GLFW
 LIB = -lglfw3 -lgdi32 -lopengl32 -lglew32 -lglu32
@@ -20,7 +20,7 @@ GLFW_LDFLAGS = -L$(LIBDIR)
 TARGET = Robin.exe
 
 # Source and object files
-SRCS := $(wildcard $(SRCDIR)/*.cpp $(SRCDIR)/*/*.cpp)
+SRCS := $(wildcard $(SRCDIR)/*.cpp $(SRCDIR)/*/*.cpp $(SRCDIR)/*/*/*.cpp)
 OBJS := $(patsubst $(SRCDIR)/%.cpp,$(OBJDIR)/%.o,$(SRCS))
 
 # Include directories, each prefixed with -I

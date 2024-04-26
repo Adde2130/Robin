@@ -1,6 +1,10 @@
 #pragma once
 
 struct Vec4f {
+    operator float*() {
+        return &x;
+    }
+
     float x;
     float y;
     float z;
