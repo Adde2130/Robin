@@ -17,6 +17,8 @@
 #include <vector>
 #include <synchapi.h>
 
+#define RGB(r, g, b) (r / 255.0f), (g / 255.0f), (b / 255.0f)
+
 const Vec4f COLOR_DARK      = { 45.9f / 255, 48.0f  / 255, 61.0f / 255, 1 };
 const Vec4f COLOR_RED       = { 1          , 119.0f / 255, 121.0f / 255, 1 };
 const Vec4f COLOR_YELLOW    = { 1, 238.0f / 255, 139.0f / 255, 1};
@@ -25,6 +27,7 @@ const Vec4f COLOR_OTHER_GREEN = { 50.0f / 255, 168.0f / 255, 82.0f / 255, 1};
 const Vec4f COLOR_PINK      = { 1, 143.0f / 255, 1, 1 };
 const Vec4f COLOR_BLUE      = { 133.0f / 255, 182.0f / 255, 1, 1};
 const Vec4f COLOR_BLUE_DARK = { 77.0f / 255, 134.0f / 255, 219.0f / 220, 1};
+const Vec4f COLOR_PURPLE    = { RGB(137, 105, 255), 1 };
 
 const unsigned int WINDOW_WIDTH = 800;
 const unsigned int WINDOW_HEIGHT = 600;
@@ -172,13 +175,14 @@ int main() {
     renderer = new Renderer(window->get_width(), window->get_height());
     renderer->set_clear_color(COLOR_DARK);
 
-    Vec4f cube1_color= {COLOR_RED.x, COLOR_RED.y, COLOR_RED.z, 0.6f};
-    Cube cube(TransformComponent(0.0f, 0.0f, 5.0f, 2.5f, 0.5f, 0.5f), cube1_color);
+    Cube cube(TransformComponent(0.0f, 0.0f, 5.0f, 2.5f, 0.5f, 0.5f), COLOR_RED);
     cube.render(*renderer);
 
-    Vec4f cube2_color= {COLOR_GREEN.x, COLOR_GREEN.y, COLOR_GREEN.z, 0.6f};
-    Cube cube2(TransformComponent(3.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f), cube2_color);
+    Cube cube2(TransformComponent(3.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f), COLOR_GREEN);
     cube2.render(*renderer);
+
+    Cube cube3(TransformComponent(10.0f, -1.0f, -2.0f, 1.0f, 0.5f, 3.0f), COLOR_PINK);
+    cube3.render(*renderer);
 
     for(int i = 0; i < 24; i++) {
         for(int j = 0; j < 24; j++) {

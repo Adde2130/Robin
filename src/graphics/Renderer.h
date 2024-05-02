@@ -9,23 +9,9 @@
 #include "util/math.h"
 #include "Camera.h"
 #include "Texture.h"
+#include "RenderBatch.h"
 
 #define ASSERT(x) if(!x) __debugbreak();
-
-struct RenderBatch {
-    RenderBatch(RenderComponent& c_render);
-    ~RenderBatch();
-    Shader* shader;
-    GLuint vao;
-    GLuint vbo;
-    GLuint ebo;
-    std::vector<float> vertices;
-    std::vector<int> indices;
-
-    bool new_data = false;
-
-    void update();
-};
 
 class Renderer {
 public:

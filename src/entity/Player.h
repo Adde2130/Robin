@@ -12,5 +12,6 @@ public:
 private:
     float x, y, z;
     float speed;
-    std::unique_ptr<RenderComponent> HUD;
+    std::unique_ptr<RenderComponent> HUD_Logo;
+    std::unique_ptr<RenderComponent> HUD_HealthBar;
 };

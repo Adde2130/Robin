@@ -58,6 +58,9 @@ void GLAPIENTRY opengl_callback(
         std::cout << "\033[31m";
     std::cout << message << "\033[0m" << std::endl; 
     std::cout << "---------------------------------------------------------------------\n" << std::endl;
+
+    if(severity == GL_DEBUG_SEVERITY_HIGH)
+        exit(-1);
 }
 
 void enable_opengl_callbacks(){

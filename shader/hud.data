@@ -1,4 +1,4 @@
 2d
 uses_camera false
-param_sizes 2 1
+param_sizes 2 1 3
 mode pixels
