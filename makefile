@@ -1,5 +1,5 @@
 # Compiler and compiler flags
-CC = C:/mingw64/bin/g++
+CC = C:/msys64/mingw64/bin/g++
 CFLAGS = -Wall -g -std=c++17
 
 # Linker flags for static linking
@@ -27,7 +27,7 @@ OBJS := $(patsubst $(SRCDIR)/%.cpp,$(OBJDIR)/%.o,$(SRCS))
 INCDIRS := $(foreach d, $(INCDIR), -I$(d))
 
 # Resource Compiler
-WINDRES = windres
+WINDRES = C:\msys64\mingw64\bin\windres
 
 # Resource Files and Object
 RES = gfx/icon.rc
