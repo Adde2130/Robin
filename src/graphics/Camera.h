@@ -13,7 +13,7 @@ public:
     float pitch = 0.0f;
     float yaw = 0.0f;
     float roll = 0.0f;
-    float speed = 0.05f;
+    float speed = 20.0f;
 
     glm::mat4 get_view_matrix() const;
     glm::mat4 get_projection_matrix(float aspect_ratio) const;

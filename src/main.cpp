@@ -43,52 +43,53 @@ Renderer* renderer;
 
 float velocity;
 
-void update(GLFWwindow* window, Camera* camera) {
+void update(float dt) {
+    GLFWwindow* glfw_window = window->get_glfw_window();
     if(move_relative) {
-        if(glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-            camera->camera_pos += camera->speed * camera->camera_front;
-        if(glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-            camera->camera_pos -= camera->speed * camera->camera_front;
-        if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-            camera->camera_pos -= glm::normalize(glm::cross(camera->camera_front, CAMERA_UP)) * camera->speed;
-        if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-            camera->camera_pos += glm::normalize(glm::cross(camera->camera_front, CAMERA_UP)) * camera->speed;
+        if(glfwGetKey(glfw_window, GLFW_KEY_W) == GLFW_PRESS)
+            camera->camera_pos += (camera->speed * dt) * camera->camera_front;
+        if(glfwGetKey(glfw_window, GLFW_KEY_S) == GLFW_PRESS)
+            camera->camera_pos -= (camera->speed * dt) * camera->camera_front;
+        if (glfwGetKey(glfw_window, GLFW_KEY_A) == GLFW_PRESS)
+            camera->camera_pos -= glm::normalize(glm::cross(camera->camera_front, CAMERA_UP)) * (camera->speed * dt);
+        if (glfwGetKey(glfw_window, GLFW_KEY_D) == GLFW_PRESS)
+            camera->camera_pos += glm::normalize(glm::cross(camera->camera_front, CAMERA_UP)) * (camera->speed * dt);
     } else {
-        if(glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
+        if(glfwGetKey(glfw_window, GLFW_KEY_W) == GLFW_PRESS) {
             glm::vec3 temp = camera->camera_front;
             temp.y = 0;
             temp = glm::normalize(temp);
-            camera->camera_pos += camera->speed * temp;
+            camera->camera_pos += camera->speed * dt * temp;
         }
-        if(glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
+        if(glfwGetKey(glfw_window, GLFW_KEY_S) == GLFW_PRESS) {
             glm::vec3 temp = camera->camera_front;
             temp.y = 0;
             temp = glm::normalize(temp);
-            camera->camera_pos -= camera->speed * temp;
+            camera->camera_pos -= camera->speed * dt * temp;
         }
-        if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
+        if (glfwGetKey(glfw_window, GLFW_KEY_A) == GLFW_PRESS) {
             glm::vec3 temp = camera->camera_front;
             temp.y = 0;
-            camera->camera_pos -= glm::normalize(glm::cross(temp, CAMERA_UP)) * camera->speed;
+            camera->camera_pos -= glm::normalize(glm::cross(temp, CAMERA_UP)) * camera->speed * dt;
         }
-        if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
+        if (glfwGetKey(glfw_window, GLFW_KEY_D) == GLFW_PRESS) {
             glm::vec3 temp = camera->camera_front;
             temp.y = 0;
-            camera->camera_pos += glm::normalize(glm::cross(temp, CAMERA_UP)) * camera->speed;
+            camera->camera_pos += glm::normalize(glm::cross(temp, CAMERA_UP)) * camera->speed * dt;
         }
     }
-    if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS && camera->camera_pos.y == 0)
-        velocity = 0.025f;
+    if (glfwGetKey(glfw_window, GLFW_KEY_SPACE) == GLFW_PRESS && camera->camera_pos.y == 0)
+        velocity = 10.0f;
     // if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
     //     camera->camera_pos -= CAMERA_UP * camera->speed;
-    if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS)
+    if (glfwGetKey(glfw_window, GLFW_KEY_UP) == GLFW_PRESS)
         camera->fov = clampf(camera->fov - 0.3f, 1, 45);
-    if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS)
+    if (glfwGetKey(glfw_window, GLFW_KEY_DOWN) == GLFW_PRESS)
         camera->fov = clampf(camera->fov + 0.3f, 1, 45);
         
-    camera->camera_pos.y += velocity;
+    camera->camera_pos.y += velocity * dt;
     camera->camera_pos.y = clampf(camera->camera_pos.y, 0, 999);
-    velocity -= 0.0004;
+    velocity -= 40 * dt;
     
 }
 
@@ -195,26 +196,29 @@ int main() {
     player.add_render_component(*renderer);
 
     constexpr std::chrono::milliseconds one_second(1000);
-    auto start_time = std::chrono::steady_clock::now();
+    auto last_time = std::chrono::steady_clock::now();
+    double elapsed_time = 0;
     unsigned int frames = 0;
 
     while (!window->should_close()) {
+        auto current_time = std::chrono::steady_clock::now();
+        float frame_time = std::chrono::duration_cast<std::chrono::duration<float>>(current_time - last_time).count();
+        last_time = current_time;
+        elapsed_time += frame_time;
         frames++;
 
         glfwPollEvents();
 
-        update(window->get_glfw_window(), camera);
+        update(frame_time);
 
         renderer->draw(camera);
 
         glfwSwapBuffers(window->get_glfw_window());
 
-        auto current_time = std::chrono::steady_clock::now();
-        auto elapsed_time = std::chrono::duration_cast<std::chrono::milliseconds>(current_time - start_time);
-        if (elapsed_time >= one_second) {
+        if (elapsed_time >= 1) {
             std::cout << "Frames per second: " << frames << std::endl;
             frames = 0; 
-            start_time = std::chrono::steady_clock::now();
+            elapsed_time = 0;
         }
     }
 

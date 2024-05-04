@@ -8,7 +8,6 @@ Camera::Camera(float fov) : fov(fov) {
     front.y = sin(glm::radians(pitch));
     front.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
     camera_front = glm::normalize(front);
-
 }
 
 glm::mat4 Camera::get_view_matrix() const {
