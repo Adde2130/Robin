@@ -1,12 +1,13 @@
 #pragma once
 
+#include "glm/glm.hpp"
+
 class PhysicsComponent {
 public:
-    PhysicsComponent();
-    ~PhysicsComponent();
+    glm::vec3 pos;
+    glm::vec3 vel;
+    glm::vec3 rot;
 
-    float vel_x;
-    float vel_y;
-    float vel_z;
     float mass; 
+    float gravity;
 };

@@ -16,6 +16,8 @@
 #include "Player.h"
 #include <vector>
 #include <synchapi.h>
+#include "Input.h"
+#include "ComponentHandler.h"
 
 #define RGB(r, g, b) (r / 255.0f), (g / 255.0f), (b / 255.0f)
 
@@ -32,96 +34,23 @@ const Vec4f COLOR_PURPLE    = { RGB(137, 105, 255), 1 };
 const unsigned int WINDOW_WIDTH = 800;
 const unsigned int WINDOW_HEIGHT = 600;
 
-double mouse_x = -1;
-double mouse_y = -1;
-
 bool move_relative = false;
 
-Camera* camera;
-Window* window;
+std::shared_ptr<Camera> p_camera;
+std::shared_ptr<Window> p_window;
+
 Renderer* renderer;
 
-float velocity;
-
-void update(float dt) {
-    GLFWwindow* glfw_window = window->get_glfw_window();
-    if(move_relative) {
-        if(glfwGetKey(glfw_window, GLFW_KEY_W) == GLFW_PRESS)
-            camera->camera_pos += (camera->speed * dt) * camera->camera_front;
-        if(glfwGetKey(glfw_window, GLFW_KEY_S) == GLFW_PRESS)
-            camera->camera_pos -= (camera->speed * dt) * camera->camera_front;
-        if (glfwGetKey(glfw_window, GLFW_KEY_A) == GLFW_PRESS)
-            camera->camera_pos -= glm::normalize(glm::cross(camera->camera_front, CAMERA_UP)) * (camera->speed * dt);
-        if (glfwGetKey(glfw_window, GLFW_KEY_D) == GLFW_PRESS)
-            camera->camera_pos += glm::normalize(glm::cross(camera->camera_front, CAMERA_UP)) * (camera->speed * dt);
-    } else {
-        if(glfwGetKey(glfw_window, GLFW_KEY_W) == GLFW_PRESS) {
-            glm::vec3 temp = camera->camera_front;
-            temp.y = 0;
-            temp = glm::normalize(temp);
-            camera->camera_pos += camera->speed * dt * temp;
-        }
-        if(glfwGetKey(glfw_window, GLFW_KEY_S) == GLFW_PRESS) {
-            glm::vec3 temp = camera->camera_front;
-            temp.y = 0;
-            temp = glm::normalize(temp);
-            camera->camera_pos -= camera->speed * dt * temp;
-        }
-        if (glfwGetKey(glfw_window, GLFW_KEY_A) == GLFW_PRESS) {
-            glm::vec3 temp = camera->camera_front;
-            temp.y = 0;
-            camera->camera_pos -= glm::normalize(glm::cross(temp, CAMERA_UP)) * camera->speed * dt;
-        }
-        if (glfwGetKey(glfw_window, GLFW_KEY_D) == GLFW_PRESS) {
-            glm::vec3 temp = camera->camera_front;
-            temp.y = 0;
-            camera->camera_pos += glm::normalize(glm::cross(temp, CAMERA_UP)) * camera->speed * dt;
-        }
-    }
-    if (glfwGetKey(glfw_window, GLFW_KEY_SPACE) == GLFW_PRESS && camera->camera_pos.y == 0)
-        velocity = 10.0f;
-    // if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
-    //     camera->camera_pos -= CAMERA_UP * camera->speed;
-    if (glfwGetKey(glfw_window, GLFW_KEY_UP) == GLFW_PRESS)
-        camera->fov = clampf(camera->fov - 0.3f, 1, 45);
-    if (glfwGetKey(glfw_window, GLFW_KEY_DOWN) == GLFW_PRESS)
-        camera->fov = clampf(camera->fov + 0.3f, 1, 45);
-        
-    camera->camera_pos.y += velocity * dt;
-    camera->camera_pos.y = clampf(camera->camera_pos.y, 0, 999);
-    velocity -= 40 * dt;
-    
-}
-
-void mouse_callback(GLFWwindow* glfw_window, double xpos, double ypos){
-    const float sens = 0.1f;
-
-    if(mouse_x != -1 && mouse_y != -1) {
-        camera->yaw   += (xpos - mouse_x) * sens;
-        camera->pitch += (mouse_y - ypos) * sens;
-        camera->pitch = clampf(camera->pitch, -89.9f, 89.9f);
-
-        glm::vec3 front;
-        front.x = cos(glm::radians(camera->yaw)) * cos(glm::radians(camera->pitch));
-        front.y = sin(glm::radians(camera->pitch));
-        front.z = sin(glm::radians(camera->yaw)) * cos(glm::radians(camera->pitch));
-        camera->camera_front = glm::normalize(front);
-    }
-
-    mouse_y = ypos;
-    mouse_x = xpos;
-}
-
-void keyboard_callback(GLFWwindow *glfw_window, int key, int scancode, int action, int mods) {
+void window_inputs(int key, int action, int mods) {
     if(key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
-        glfwSetWindowShouldClose(glfw_window, true);
+        glfwSetWindowShouldClose(p_window->get_glfw_window(), true);
     if(key == GLFW_KEY_F4 && action == GLFW_PRESS) {
-        if(window->is_fullscreen())
-            camera->fov = clampf(camera->fov, 1, 45);
+        if(p_window->is_fullscreen())
+            p_camera->fov = clampf(p_camera->fov, 1, 45);
         else
-            camera->fov += 45.0f;
-        window->toggle_fullscreen();
-        renderer->set_window_dimensions(window->get_width(), window->get_height());
+            p_camera->fov += 45.0f;
+        p_window->toggle_fullscreen();
+        renderer->set_window_dimensions(p_window->get_width(), p_window->get_height());
     }
 
     if(key == GLFW_KEY_TAB && action == GLFW_PRESS)
@@ -133,11 +62,11 @@ void framebuffer_size_callback(GLFWwindow* glfw_window, int width, int height) {
 }
 
 void scroll_callback(GLFWwindow* glfw_window, double xoffset, double yoffset) {
-    camera->fov -= yoffset * 3;
-    if(window->is_fullscreen())
-        camera->fov = clampf(camera->fov, 1, 90);
+    p_camera->fov -= yoffset * 3;
+    if(p_window->is_fullscreen())
+        p_camera->fov = clampf(p_camera->fov, 1, 90);
     else
-        camera->fov = clampf(camera->fov, 1, 45);
+        p_camera->fov = clampf(p_camera->fov, 1, 45);
 }
 
 int main() {
@@ -146,16 +75,11 @@ int main() {
         return -1;
     }
 
-
-
-    camera = new Camera(45.0f);
-    camera->camera_pos.x -= 2;
-
-    window = new Window("Robin", WINDOW_WIDTH, WINDOW_HEIGHT, false, 240);
-    window->set_mouse_callback(mouse_callback);
-    window->set_keyboard_callback(keyboard_callback);
-    window->set_framebuffer_size_callback(framebuffer_size_callback);
-    window->set_scroll_callback(scroll_callback);
+    p_window = std::make_shared<Window>("Robin", WINDOW_WIDTH, WINDOW_HEIGHT, false, 240);
+    p_window->set_mouse_callback(mouse_callback);
+    p_window->set_keyboard_callback(keyboard_callback);
+    p_window->set_framebuffer_size_callback(framebuffer_size_callback);
+    p_window->set_scroll_callback(scroll_callback);
 
     // No V-SYNC
     // glfwSwapInterval(1);
@@ -172,8 +96,9 @@ int main() {
     glBlendEquation(GL_FUNC_ADD);
     glEnable(GL_DEPTH_TEST);
 
+    set_input_window(p_window); 
 
-    renderer = new Renderer(window->get_width(), window->get_height());
+    renderer = new Renderer(p_window->get_width(), p_window->get_height());
     renderer->set_clear_color(COLOR_DARK);
 
     Cube cube(TransformComponent(0.0f, 0.0f, 5.0f, 2.5f, 0.5f, 0.5f), COLOR_RED);
@@ -185,6 +110,8 @@ int main() {
     Cube cube3(TransformComponent(10.0f, -1.0f, -2.0f, 1.0f, 0.5f, 3.0f), COLOR_PINK);
     cube3.render(*renderer);
 
+    ComponentHandler<float> h_player;
+
     for(int i = 0; i < 24; i++) {
         for(int j = 0; j < 24; j++) {
             Cube temp_cube(TransformComponent(i - 8, -2, j - 8, 1, 1, 1), ((j + i) % 2) ? COLOR_YELLOW : COLOR_BLUE);
@@ -192,15 +119,24 @@ int main() {
         }
     }
     
-    Player player(1.0f, 1.0f, 1.0f);
+    Player player(0.0f, 0.0f, 0.0f);
     player.add_render_component(*renderer);
+
+    h_player.add(player.c_frame_update);
+    
+    UpdateComponent<int, int, int> c_window_input;
+    c_window_input.update = &window_inputs;
+
+    subscribe_keyboard_event(c_window_input);
+
+    p_camera = player.get_camera();
 
     constexpr std::chrono::milliseconds one_second(1000);
     auto last_time = std::chrono::steady_clock::now();
     double elapsed_time = 0;
     unsigned int frames = 0;
 
-    while (!window->should_close()) {
+    while (!p_window->should_close()) {
         auto current_time = std::chrono::steady_clock::now();
         float frame_time = std::chrono::duration_cast<std::chrono::duration<float>>(current_time - last_time).count();
         last_time = current_time;
@@ -209,21 +145,21 @@ int main() {
 
         glfwPollEvents();
 
-        update(frame_time);
+        h_player.update(frame_time);
+        // update(frame_time);
 
-        renderer->draw(camera);
+        renderer->draw(p_camera.get());
 
-        glfwSwapBuffers(window->get_glfw_window());
+        glfwSwapBuffers(p_window->get_glfw_window());
 
         if (elapsed_time >= 1) {
             std::cout << "Frames per second: " << frames << std::endl;
-            frames = 0; 
+
+            frames = 0;
             elapsed_time = 0;
         }
     }
 
-    delete window;
-    delete camera;
     delete renderer;
 
     glfwTerminate();

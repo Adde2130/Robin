@@ -1,11 +1,6 @@
 #include "Cube.h"
 Cube::Cube(TransformComponent c_transform, Vec4f v4_color) 
 : c_transform(c_transform), v4_color(v4_color) {
-    
-}
-
-void Cube::render(Renderer& renderer) {
-
     float vertices[] = {
         c_transform.x,                     c_transform.y,                      c_transform.z, v4_color.x, v4_color.y, v4_color.z, v4_color.w,
         c_transform.x + c_transform.width, c_transform.y,                      c_transform.z, v4_color.x, v4_color.y, v4_color.z, v4_color.w,
@@ -27,7 +22,13 @@ void Cube::render(Renderer& renderer) {
         2, 3, 7, 7, 6, 2  // Bottom face
     };
 
-    RenderComponent c_render(vertices, sizeof(vertices) / sizeof(float), indices, sizeof(indices) / sizeof(int), "cube");
+    c_render = new RenderComponent(vertices, sizeof(vertices) / sizeof(float), indices, sizeof(indices) / sizeof(int), "cube");
+}
 
-    renderer.push_render_component(c_render);
+Cube::~Cube() {
+    delete c_render;
+}
+
+void Cube::render(Renderer& renderer) {
+    renderer.push_render_component(*c_render);
 }

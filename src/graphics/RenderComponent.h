@@ -6,6 +6,7 @@
 class RenderComponent {
 public:
     RenderComponent(float* vertices, unsigned int vertex_count, int* indices, unsigned int index_count, const std::string shader);
+    ~RenderComponent();
 
     void   setVertices(float* vertices) { this->vertices = vertices; }
     float* getVertices() { return this->vertices; }
