@@ -11,7 +11,7 @@ Renderer::Renderer(int window_width, int window_height)
 void Renderer::push_render_component(RenderComponent& c_render) {
     RenderBatch* batch;
     if(!render_batches.count(c_render.shader))
-        render_batches.emplace(c_render.shader, new RenderBatch(c_render));
+        render_batches.emplace(c_render.shader, new RenderBatch(c_render.shader));
 
     batch = render_batches.at(c_render.shader);
 
@@ -19,14 +19,7 @@ void Renderer::push_render_component(RenderComponent& c_render) {
     if(!batch)
         std::cout << "BIG PROBLEM" << std::endl;
 
-    int64_t vertex_offset = batch->vertices.size() / batch->shader->va_size();
-    for(int i = 0; i < c_render.vertex_count; i++)
-        batch->vertices.push_back(c_render.vertices[i]);
-
-    for(int i = 0; i < c_render.index_count; i++)
-        batch->indices.push_back(c_render.indices[i] + vertex_offset);
-
-    batch->new_data = true;
+    batch->push_render_component(c_render);
 }
 
 

@@ -1,9 +1,10 @@
 #pragma once
 
+#include "Component.h"
 #include <string>
 #include <vector>
 
-class RenderComponent {
+class RenderComponent : Component {
 public:
     RenderComponent(float* vertices, unsigned int vertex_count, int* indices, unsigned int index_count, const std::string shader);
     ~RenderComponent();
@@ -15,7 +16,10 @@ public:
 
     float* vertices;
     int    vertex_count;
+    int    batch_vertices_index;
 
     int*   indices;
     int    index_count;
+    int    batch_indices_index;
+
 };

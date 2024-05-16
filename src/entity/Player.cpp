@@ -1,6 +1,7 @@
 #include "Player.h"
 #include "Texture.h"
 #include "Input.h"
+#include "EventHandler.h"
 
 using namespace std::placeholders;
 
@@ -11,18 +12,15 @@ struct HUDVertex {
     float color[3];
 };
 
-Player::Player(float x, float y, float z) {
+Player::Player(EventHandler& h_event, float x, float y, float z) {
     p_camera = std::make_shared<Camera>(45.0f);
 
     c_physics.pos = glm::vec3(x, y, z);
     c_physics.gravity = 40;
 
-    c_frame_update.update = std::bind(&Player::frame_update, this, _1);
-    c_mouse_update.update = std::bind(&Player::mouse_update, this, _1, _2, _3, _4);
-    c_keyboard_update.update = std::bind(&Player::keyboard_update, this, _1, _2, _3);
-
-    subscribe_mouse_event(c_mouse_update);
-    subscribe_keyboard_event(c_keyboard_update);
+    h_event.subscribe(E_UPDATE, std::bind(&Player::update, this, _1));
+    h_event.subscribe(E_MOUSE_MOVE, std::bind(&Player::mouse_update, this, _1));
+    h_event.subscribe(E_KEYBOARD, std::bind(&Player::keyboard_update, this, _1));
 
     HUDVertex* vertices = new HUDVertex[4] {
         20.0f, 20.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f,
@@ -42,7 +40,10 @@ void Player::add_render_component(Renderer& renderer) {
     renderer.push_render_component(*this->HUD_Logo);
 }
 
-void Player::frame_update(float dt) {
+void Player::update(const Event& e) {
+    const UpdateEvent& e_u = static_cast<const UpdateEvent&>(e);
+
+    const float dt = e_u.dt;
     const float yaw = c_physics.rot.y;
 
     glm::vec3 dir(cos(glm::radians(yaw)), 0.0f, sin(glm::radians(yaw)));
@@ -85,10 +86,12 @@ void Player::frame_update(float dt) {
     
 }
 
-void Player::mouse_update(double x, double y, double dx, double dy) {
+void Player::mouse_update(const Event& e) {
+    const MouseMoveEvent& e_mm = static_cast<const MouseMoveEvent&>(e);
+
     const float sens = 0.1f;
-    c_physics.rot.y += dx * sens; // Rotation around the y-axis
-    c_physics.rot.x -= dy * sens; // Rotation around the x-axis
+    c_physics.rot.y += e_mm.dx * sens; // Rotation around the y-axis
+    c_physics.rot.x -= e_mm.dy * sens; // Rotation around the x-axis
     c_physics.rot.x = clampf(c_physics.rot.x, -89.9f, 89.9f);
     glm::normalize(c_physics.rot);
 
@@ -96,10 +99,12 @@ void Player::mouse_update(double x, double y, double dx, double dy) {
     p_camera->pitch = c_physics.rot.x;
 }
 
-void Player::keyboard_update(int key, int action, int mode) {
-    switch(key) {
+void Player::keyboard_update(const Event& e) {
+    const KeyboardEvent& e_kb = static_cast<const KeyboardEvent&>(e);
+
+    switch(e_kb.key) {
     case GLFW_KEY_SPACE:
-        if(action == GLFW_PRESS)
+        if(e_kb.action == GLFW_PRESS)
            c_physics.vel.y = 10;
         break;
 

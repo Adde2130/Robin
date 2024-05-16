@@ -1,15 +1,15 @@
 #include "RenderBatch.h"
 #include "ResourceManager.h"
 
-RenderBatch::RenderBatch(RenderComponent& c_render) {
-    std::cout << "Creating render batch with the shader '" << c_render.shader << "'" << std::endl;
+RenderBatch::RenderBatch(const std::string& s_shader) {
+    std::cout << "Creating render batch with the shader '" << s_shader << "'" << std::endl;
 
-    if(!LoadedShaders.count(c_render.shader)) {
-        std::cout << "Loading shader '" << c_render.shader << "'" << std::endl;
-        shader = new Shader(c_render.shader);
+    if(!LoadedShaders.count(s_shader)) {
+        std::cout << "Loading shader '" << s_shader << "'" << std::endl;
+        shader = new Shader(s_shader);
     }
 
-    shader = LoadedShaders.at(c_render.shader);
+    shader = LoadedShaders.at(s_shader);
 
     glCreateVertexArrays(1, &vao);
     glBindVertexArray(vao);
@@ -41,6 +41,20 @@ RenderBatch::~RenderBatch() {
     glDeleteBuffers(1, &ebo);
 }
 
+void RenderBatch::push_render_component(RenderComponent& c_render) {
+    int64_t vertex_offset = vertices.size() / shader->va_size();
+
+    c_render.batch_vertices_index = vertices.size();
+    for(int i = 0; i < c_render.vertex_count; i++)
+        vertices.push_back(c_render.vertices[i]);
+
+    c_render.batch_indices_index = indices.size();
+    for(int i = 0; i < c_render.index_count; i++)
+        indices.push_back(c_render.indices[i] + vertex_offset);
+
+    new_data = true;
+}
+
 void RenderBatch::update() {
     glBindBuffer(GL_ARRAY_BUFFER, this->vbo);
     glBufferData(GL_ARRAY_BUFFER, this->vertices.size() * sizeof(float), &this->vertices[0], GL_STATIC_DRAW);
@@ -50,4 +64,11 @@ void RenderBatch::update() {
     
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+}
+
+void RenderBatch::update_component(RenderComponent& c_render) {
+    for(int i = 0; i < c_render.vertex_count; i++)
+        vertices[i + c_render.batch_vertices_index] = c_render.vertices[i];
+
+    new_data = true;
 }

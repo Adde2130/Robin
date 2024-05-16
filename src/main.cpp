@@ -17,7 +17,6 @@
 #include <vector>
 #include <synchapi.h>
 #include "Input.h"
-#include "ComponentHandler.h"
 
 #define RGB(r, g, b) (r / 255.0f), (g / 255.0f), (b / 255.0f)
 
@@ -38,10 +37,17 @@ bool move_relative = false;
 
 std::shared_ptr<Camera> p_camera;
 std::shared_ptr<Window> p_window;
+std::shared_ptr<EventHandler> ph_events;
 
 Renderer* renderer;
 
-void window_inputs(int key, int action, int mods) {
+void window_inputs(const Event& e) {
+    const KeyboardEvent& e_kb = static_cast<const KeyboardEvent&>(e);
+
+    const int key = e_kb.key;
+    const int action = e_kb.action;
+    const int mods = e_kb.mods;
+
     if(key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
         glfwSetWindowShouldClose(p_window->get_glfw_window(), true);
     if(key == GLFW_KEY_F4 && action == GLFW_PRESS) {
@@ -69,6 +75,7 @@ void scroll_callback(GLFWwindow* glfw_window, double xoffset, double yoffset) {
         p_camera->fov = clampf(p_camera->fov, 1, 45);
 }
 
+using namespace std::placeholders;
 int main() {
     if (!glfwInit()) {
         std::cout << "Failed to initialize GLFW" << std::endl;
@@ -98,6 +105,9 @@ int main() {
 
     set_input_window(p_window); 
 
+    ph_events = std::make_shared<EventHandler>();
+    set_event_handler(ph_events);
+
     renderer = new Renderer(p_window->get_width(), p_window->get_height());
     renderer->set_clear_color(COLOR_DARK);
 
@@ -110,8 +120,6 @@ int main() {
     Cube cube3(TransformComponent(10.0f, -1.0f, -2.0f, 1.0f, 0.5f, 3.0f), COLOR_PINK);
     cube3.render(*renderer);
 
-    ComponentHandler<float> h_player;
-
     for(int i = 0; i < 24; i++) {
         for(int j = 0; j < 24; j++) {
             Cube temp_cube(TransformComponent(i - 8, -2, j - 8, 1, 1, 1), ((j + i) % 2) ? COLOR_YELLOW : COLOR_BLUE);
@@ -119,15 +127,10 @@ int main() {
         }
     }
     
-    Player player(0.0f, 0.0f, 0.0f);
+    Player player(*ph_events, 0.0f, 0.0f, 0.0f);
     player.add_render_component(*renderer);
 
-    h_player.add(player.c_frame_update);
-    
-    UpdateComponent<int, int, int> c_window_input;
-    c_window_input.update = &window_inputs;
-
-    subscribe_keyboard_event(c_window_input);
+    ph_events->subscribe(E_KEYBOARD, std::bind(window_inputs, _1));
 
     p_camera = player.get_camera();
 
@@ -145,8 +148,7 @@ int main() {
 
         glfwPollEvents();
 
-        h_player.update(frame_time);
-        // update(frame_time);
+        ph_events->dispatch(UpdateEvent(frame_time));
 
         renderer->draw(p_camera.get());
 

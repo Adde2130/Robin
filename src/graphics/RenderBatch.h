@@ -6,7 +6,7 @@
 #include <vector>
 
 struct RenderBatch {
-    RenderBatch(RenderComponent& c_render);
+    RenderBatch(const std::string& s_shader);
     ~RenderBatch();
     Shader* shader;
     GLuint vao;
@@ -17,5 +17,7 @@ struct RenderBatch {
 
     bool new_data = false;
 
+    void push_render_component(RenderComponent& c_render);
     void update();
+    void update_component(RenderComponent& c_render);
 };
