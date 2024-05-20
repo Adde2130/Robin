@@ -1,8 +1,12 @@
-// #pragma once
+#pragma once
 
-// #include "AABB.h"
+#include "Component.h"
+#include "AABB.h"
 
-// class CollisionComponent {
-// public:
-//     AABB aabb;
-// }
+class CollisionComponent : public Component {
+public:
+    CollisionComponent() : Component(C_COLLISION), aabb({0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 0.0f}) {}
+
+    AABB aabb;
+    bool movable = false;
+};

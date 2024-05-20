@@ -1,10 +1,11 @@
 #pragma once
 
+#include "Component.h"
 #include "glm/glm.hpp"
 
-class PhysicsComponent {
+class PhysicsComponent : public Component {
 public:
-    PhysicsComponent() : pos(0.0f), vel(0.0f), rot(0.0f), mass(0.0f), gravity(0.0f) {}
+    PhysicsComponent() : Component(C_PHYSICS), pos(0.0f), vel(0.0f), rot(0.0f), mass(0.0f), gravity(0.0f) {}
 
     glm::vec3 pos;
     glm::vec3 vel;

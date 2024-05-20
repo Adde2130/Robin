@@ -1,6 +1,6 @@
 # Compiler and compiler flags
 CC = C:/msys64/mingw64/bin/g++
-CFLAGS = -Wall -g -std=c++17 -O3
+CFLAGS = -Wall -g -std=c++17 -O0
 
 # Linker flags for static linking
 LDFLAGS = -static-libgcc

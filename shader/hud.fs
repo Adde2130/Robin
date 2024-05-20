@@ -6,7 +6,7 @@ in vec2 v_TexCoord;
 in float v_TexIndex;
 in vec3 v_Color;
 
-uniform sampler2D u_Textures[1];
+uniform sampler2D u_Textures[2];
 
 void main(){
     int index = int(v_TexIndex);

@@ -4,12 +4,10 @@
 RenderBatch::RenderBatch(const std::string& s_shader) {
     std::cout << "Creating render batch with the shader '" << s_shader << "'" << std::endl;
 
-    if(!LoadedShaders.count(s_shader)) {
-        std::cout << "Loading shader '" << s_shader << "'" << std::endl;
-        shader = new Shader(s_shader);
-    }
-
-    shader = LoadedShaders.at(s_shader);
+    if(!LoadedShaders.count(s_shader))
+        shader = LoadShader(s_shader);
+    else
+        shader = LoadedShaders.at(s_shader);
 
     glCreateVertexArrays(1, &vao);
     glBindVertexArray(vao);

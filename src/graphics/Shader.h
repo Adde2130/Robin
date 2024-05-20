@@ -1,8 +1,10 @@
 #pragma once
 #include <iostream>
 #include <unordered_map>
+#include <memory>
 #include "util/math.h"
 #include "glm/glm.hpp"
+
 
 class Shader {
 public:

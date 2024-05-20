@@ -17,4 +17,9 @@ struct Vec3f {
     float z;
 };
 
+struct Vec2f {
+    float x;
+    float y;
+};
+
 float clampf(float val, float min, float max);

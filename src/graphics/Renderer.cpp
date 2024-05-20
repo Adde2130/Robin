@@ -1,7 +1,6 @@
 #include "graphics/Renderer.h"
 #include "glm/gtc/matrix_transform.hpp"
 
-GLuint tex = 0;
 
 Renderer::Renderer(int window_width, int window_height)
  : window_width(window_width), window_height(window_height) {
@@ -23,13 +22,17 @@ void Renderer::push_render_component(RenderComponent& c_render) {
 }
 
 
-
+GLuint tex_1 = 0;
+GLuint tex_2 = 0;
 void Renderer::draw(Camera* camera) {
     clear();
 
-    if(!tex)
-        tex = LoadTexture("../gfx/Robin.png");
-    glBindTextureUnit(0, tex);
+    if(!tex_1)
+        tex_1 = LoadTexture("../gfx/Robin.png");
+    glBindTextureUnit(0, tex_1);
+    if(!tex_2)
+        tex_2 = LoadTexture("../gfx/Crosshair.png");
+    glBindTextureUnit(1, tex_2);
 
     glm::mat4 view = camera->get_view_matrix();
     glm::mat4 projection = camera->get_projection_matrix((float)window_width / (float)window_height);

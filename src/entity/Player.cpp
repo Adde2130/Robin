@@ -2,6 +2,7 @@
 #include "Texture.h"
 #include "Input.h"
 #include "EventHandler.h"
+#include "ModelUtil.h"
 
 using namespace std::placeholders;
 
@@ -22,22 +23,41 @@ Player::Player(EventHandler& h_event, float x, float y, float z) {
     h_event.subscribe(E_MOUSE_MOVE, std::bind(&Player::mouse_update, this, _1));
     h_event.subscribe(E_KEYBOARD, std::bind(&Player::keyboard_update, this, _1));
 
-    HUDVertex* vertices = new HUDVertex[4] {
-        20.0f, 20.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f,
-        148.0f, 20.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f,
+    /* Robin logo */
+    HUDVertex* vertices_1 = new HUDVertex[4] {
+        20.0f,   20.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f,
+        148.0f,  20.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f,
         148.0f, 148.0f, 1.0f, 1.0f, 1.0f, 0.0f, 0.0f, 0.0f,
-        20.0f, 148.0f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 0.0f,
+        20.0f,  148.0f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 0.0f,
     };
 
-    int* indices = new int[6] {
+    int* indices_1 = new int[6] {
         0, 1, 2, 2, 3, 0
     };
 
-    HUD_Logo = std::make_unique<RenderComponent>((float*)vertices, 32, indices, 6, "hud");
+    HUD_Logo = std::make_unique<RenderComponent>((float*)vertices_1, 32, indices_1, 6, "hud");
+
+
+    /* Crosshair */
+    Quad q_cro(300, 300, 18, 18);
+
+    HUDVertex* vertices_2 = new HUDVertex[4] {
+        250.0f, 250.0f, 0.0f, 0.0f, 2.0f, 0.0f, 0.0f, 0.0f,
+        282.0f, 250.0f, 1.0f, 0.0f, 2.0f, 0.0f, 0.0f, 0.0f,
+        282.0f, 282.0f, 1.0f, 1.0f, 2.0f, 0.0f, 0.0f, 0.0f,
+        250.0f, 282.0f, 0.0f, 1.0f, 2.0f, 0.0f, 0.0f, 0.0f,
+    };
+
+    int* indices_2 = new int[6] {
+        0, 1, 2, 2, 3, 0
+    };
+
+    HUD_Crosshair = std::make_unique<RenderComponent>((float*)vertices_2, 32, indices_2, 6, "hud");
 }
 
 void Player::add_render_component(Renderer& renderer) {
     renderer.push_render_component(*this->HUD_Logo);
+    renderer.push_render_component(*this->HUD_Crosshair);
 }
 
 void Player::update(const Event& e) {

@@ -83,7 +83,7 @@ void Shader::read_shader_data(const std::string& data) {
     std::cout << "Shader data - Is 3d: " << this->is_3D() << ", using camera: " << this->use_camera() << ", vertex array size: " << this->total_vertex_array_size << ", asd: " << this->additional_param_sizes << std::endl;
 }
 
-Shader::Shader(const std::string& shader) 
+Shader::Shader(const std::string& shader)
 : shader_name(shader), additional_param_sizes(nullptr), renderer_id(0) {
     unsigned int program = glCreateProgram();
 
@@ -105,7 +105,7 @@ Shader::Shader(const std::string& shader)
     
     this->renderer_id = program;
 
-    LoadedShaders.emplace(shader, this);
+    // LoadedShaders.emplace(shader, this);
     this->read_shader_data(data);
 }
 

@@ -13,6 +13,7 @@ public:
     float* getVertices() { return this->vertices; }
 
     std::string shader;
+    std::string texture;
 
     float* vertices;
     int    vertex_count;

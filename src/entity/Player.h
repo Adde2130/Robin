@@ -25,5 +25,6 @@ private:
     std::shared_ptr<Camera> p_camera;
 
     std::unique_ptr<RenderComponent> HUD_Logo;
+    std::unique_ptr<RenderComponent> HUD_Crosshair;
     std::unique_ptr<RenderComponent> HUD_HealthBar;
 };

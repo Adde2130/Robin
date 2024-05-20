@@ -1,4 +1,4 @@
-// #include "AABB.h"
+#include "AABB.h"
 
 // AABB::AABB(Vec3f min_point, Vec3f max_point)
 // :min_point(min_point), max_point(max_point) {
